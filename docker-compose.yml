@@ -1,0 +1,12 @@
+services:
+  spark:
+    image: spark:python3
+    container_name: spark
+    working_dir: /opt/spark-apps
+    volumes:
+      - ./src:/opt/spark-apps
+      - ./data:/opt/spark-data
+      - ./output:/opt/spark-output
+    ports:
+      - "4040:4040"   # UI Spark (optionnel pour voir le job)
+    command: tail -f /dev/null
