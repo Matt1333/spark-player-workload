@@ -136,6 +136,7 @@ docker exec -it spark /opt/spark/bin/spark-submit analysis.py
 
 # STEP 8 — (Optional) Stop containers when finished
 docker-compose down
+```
 
 ## 7. Screenshots & Execution Proof
 
