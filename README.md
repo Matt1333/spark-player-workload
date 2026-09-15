@@ -6,7 +6,7 @@ A distributed data pipeline built with **Apache Spark** and **Docker** that turn
 
 ![Top 20 players by workload index](screenshots/workload_top20.png)
 
-> **Interactive dashboard:** the results can be explored in a Streamlit app (risk map, rankings, filters by league / position / minutes). See [Explore the results](#explore-the-results) below.
+> **Live dashboard:** [spark-player-workload.streamlit.app](https://spark-player-workload-ckgewcsgm8x2bkddlbt7cj.streamlit.app/) - risk map, rankings, filters by league / position / minutes.
 
 ## What it does
 
@@ -60,7 +60,7 @@ output/player_workload/
 
 ## Explore the results
 
-A Streamlit dashboard reads the Spark outputs and makes them interactive: a load-vs-minutes risk map, rankings, per-position and per-club views, with filters by league, position and minutes played. No Spark needed at runtime.
+A Streamlit dashboard reads the Spark outputs and makes them interactive (**[open the live app](https://spark-player-workload-ckgewcsgm8x2bkddlbt7cj.streamlit.app/)**): a load-vs-minutes risk map, rankings, per-position and per-club views, with filters by league, position and minutes played. No Spark needed at runtime.
 
 ```bash
 pip install -r requirements.txt
