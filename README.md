@@ -1,163 +1,76 @@
-# Spark Player Workload Project
-# Spark Player Workload Project
+# Spark Player Workload
 
-# Spark Player Workload Analysis  
-Technical Big Data Project – Apache Spark + Docker
+**Which professional footballers carried the heaviest physical load in 2024–25, and who is most exposed to overuse?**
 
-## 1. Introduction  
+A distributed data pipeline built with **Apache Spark** and **Docker** that turns raw season statistics for 2,854 players across Europe's big five leagues into workload metrics, an injury-risk proxy, and rankings by player, position and team.
 
-This project was developed as part of the *Big Data Introduction* final evaluation (Option A – Technical Project).  
-As both team members are passionate about sports performance and athlete management, we decided to explore how Big Data processing can help quantify *physical workload, identify **overuse patterns, and estimate **injury-risk indicators* for professional football players.
+![Top 20 players by workload index](screenshots/workload_top20.png)
 
-Modern football produces a vast quantity of event-based and tracking data. Clubs increasingly rely on analytics to manage players’ intensity, avoid overload, and optimize training schedules.  
-Our goal in this project is to build a simplified but realistic workload evaluation pipeline using *Apache Spark, running inside a fully containerized environment using **Docker*.
+## What it does
 
-This project demonstrates our ability to:
-- Install and configure a Big Data processing engine (Spark)
-- Execute distributed computations on structured sports data
-- Build custom metrics (defensive load, running effort, duel intensity)
-- Rank players and teams based on workload and injury-risk factors
-- Produce clean analytical outputs in distributed Spark format  
-- Structure the work following professional engineering standards
+1. Loads a season dataset (FBref-style advanced stats, 2024–25) into Spark.
+2. Keeps players with meaningful game time (≥ 5 full-match equivalents), 1,987 of them.
+3. Derives per-90-minute load metrics from raw counts:
+   - `running_load` — progressive carrying distance per 90
+   - `defensive_load` — tackles + interceptions per 90
+   - `duel_load` — fouls committed per 90 (a proxy for duel intensity)
+4. Combines them into a **workload index** (40 % running, 40 % defensive, 20 % duels) and scales it by playing time to get an **injury-risk score**.
+5. Writes four outputs as partitioned CSV: overall top 20, top 10 per position, team summary, and the full enriched table.
 
-This repository contains everything required to reproduce the analysis.
+Everything runs inside a single Spark container, so the analysis is reproducible on any machine with Docker.
 
-## 2. Dataset Origin  
+## Key findings
 
-The dataset used for this project is derived from publicly available football statistics inspired by *FBref* and *StatsBomb-style advanced metrics*.  
-It includes detailed information for players across the 2024–2025 European season:
-- Playing time and appearances during season
-- Defensive actions (tackles, interceptions, blocks)  
-- Ball progression metrics  
-- Running volume / progression distance  
-- Fouls, duels, recovery metrics  
-- Club, league, nationality  
-- Positional information  
-Two dataset variants were created:
-- *Full dataset (~250 columns)*  
-- *Light dataset*, optimized for Spark and used in this project:
-  players_data_light-2024_2025.csv
+- **15 of the top 20 players by workload index are defenders**, the other 5 midfielders. Jérémy Doku (Manchester City) tops the ranking on running load alone, while Iñigo Martínez, Rúben Dias and Marquinhos combine high running and defensive load over 1,700 to 2,500 minutes.
+- Once playing time is factored in, **defenders dominate the injury-risk score** too: they accumulate load *and* minutes, which is exactly the overuse pattern clubs monitor.
+- At team level, average workload varies sharply between clubs, which points to differences in playing style (pressing, possession) rather than just fitness.
 
-This lighter version ensures faster execution in a containerized Spark environment.
+## Stack
 
+| Layer | Tool |
+|---|---|
+| Processing | Apache Spark 3 (PySpark, DataFrame API, window functions) |
+| Environment | Docker / docker-compose |
+| Language | Python |
+| Data | CSV, 2,854 rows × 165 columns (Premier League, La Liga, Serie A, Bundesliga, Ligue 1) |
 
-
-## 3. Repository Structure  
-
-BigDataProject/
-│
-├── docker-compose.yml → Spark environment configuration
-│
-├── src/
-│ ├── analysis.py → Full Spark workload analysis
-│ ├── minimal_example.py → Minimal Spark test script
-│
-├── data/
-│ └── players_data_light-2024_2025.csv → Dataset used in this project
-│
-├── output/
-│ └── player_workload/
-│ ├── overall_top20/ → Top 20 workload players
-│ ├── top_by_position/ → Top 10 players by position
-│ ├── team_summary/ → Team-level workload analysis
-│ └── full_player_workload/ → Full enriched dataset
-│
-├── screenshots/
-│ ├── minimal_example.png → Output of minimal Spark job
-│ ├── workload_top20.png → Top 20 workload output
-│ ├── workload_positions.png → Top players by position
-│ ├── workload_teams.png → Team-level workload summary
-│ └── output_structure.png → Proof of Spark output folders
-│
-└── README.md → This documentation
-
-## 4. Correspondence With Required Deliverables  
-
-| Requirement from professor                                             | Location in repo |
-|-----------------------------------------------------------------------|------------------|
-| Project title + short description                                     | Top of README |
-| Chosen tool (Spark) + justification                                   | "Why Spark?" section |
-| Installation steps                                                     | Section 5 |
-| Minimal working example                                                | src/minimal_example.py + screenshot |
-| Screenshots proving execution                                          | /screenshots/ folder |
-| Explanation of how tool fits Big Data ecosystem                        | Section 6 |
-| Challenges encountered                                                 | Section 8 |
-| “My Setup Notes”                                                       | Section 9 |
-| Configuration files                                                    | docker-compose.yml |
-| Scripts / code                                                         | src/ |
-| Sample data                                                            | /data/ |
-| Output data                                                            | /output/player_workload/ |
-
-
-## 5. Installation & Execution Steps
-
-Below is the complete sequence of commands and actions required to install and execute the project.
+## Run it
 
 ```bash
-# STEP 1 — Clone the repository
-git clone https://github.com/<your_repo>/spark-player-workload.git
+git clone https://github.com/Matt1333/spark-player-workload.git
 cd spark-player-workload
 
-
-# STEP 2 — Ensure Docker Desktop is running
-# (Spark cannot start unless Docker engine is active)
-
-
-# STEP 3 — Start the Spark container
-docker-compose up -d
-
-
-# STEP 4 — Verify Spark is running
-docker ps
-# Expected: a container named "spark" should appear.
-
-
-# STEP 5 — Run the minimal Spark job (environment validation)
-docker exec -it spark /opt/spark/bin/spark-submit minimal_example.py
-# Output: small test table printed in terminal.
-# Screenshot example: screenshots/minimal_example.png
-
-
-# STEP 6 — Run the full Spark workload analysis
-docker exec -it spark /opt/spark/bin/spark-submit analysis.py
-# Output: workload tables, rankings, injury-risk scores.
-
-
-# STEP 7 — Inspect Spark-generated outputs
-# All results will appear under:
-#   output/player_workload/
-#       ├── overall_top20/
-#       ├── top_by_position/
-#       ├── team_summary/
-#       └── full_player_workload/
-
-# Screenshot example: screenshots/output_structure.png
-
-
-# STEP 8 — (Optional) Stop containers when finished
+docker-compose up -d                                             # start Spark
+docker exec -it spark /opt/spark/bin/spark-submit minimal_example.py   # sanity check
+docker exec -it spark /opt/spark/bin/spark-submit analysis.py          # full analysis
 docker-compose down
 ```
 
-## 7. Screenshots & Execution Proof
+Results land in `output/player_workload/`:
 
-This section provides visual proof of the correct execution of all Spark processes, as required for the technical Big Data project.
+```
+output/player_workload/
+├── overall_top20/         top 20 players by workload index
+├── top_by_position/       top 10 per position (GK / DF / MF / FW)
+├── team_summary/          average workload and risk per club
+└── full_player_workload/  every player with all derived metrics
+```
 
-### 7.1 Minimal Working Example (Spark Job)
-This screenshot confirms that Spark was successfully initialized inside Docker and executed a simple transformation.
-![Minimal example](screenshots/minimal_example.png)
+## More screenshots
 
-### 7.2 Top 20 Players by Workload Index
-This output demonstrates the successful computation of custom workload metrics and ranking.
-![Top 20 workload players](screenshots/workload_top20.png)
+| Top players per position | Team-level summary |
+|---|---|
+| ![By position](screenshots/workload_positions.png) | ![By team](screenshots/workload_teams.png) |
 
-### 7.3 Workload Ranking by Position
-Spark correctly classified players by primary position and produced the top 10 per role.
-![Players by position](screenshots/workload_positions.png)
+## Limitations and next steps
 
-### 7.4 Team-Level Workload Summary
-This screenshot confirms aggregation logic at team level (mean workload + injury risk).
-![Team workload summary](screenshots/workload_teams.png)
+This is a heuristic model, not a validated injury predictor, and it is worth being explicit about where it falls short:
 
-### 7.5 Spark Output Folder Structure
-Proof that Spark generated distributed output folders in CSV partition format.
-![Spark output folder structure](screenshots/output_structure.png)
+- **No tracking data.** True physical load (total distance, sprints, accelerations) is not in public season stats. Progressive carrying distance is used as a proxy, which biases the index towards ball-carriers.
+- **Static weights.** The 40 / 40 / 20 split is a judgement call. A natural next step is fitting the weights against actual injury records.
+- **`utilisation_ratio` adds no signal** as currently defined (minutes divided by full-match equivalents is ~1 by construction). It should be replaced by the player's share of the team's total minutes.
+- **Season-level granularity.** Per-match or rolling 4-week windows would make the risk score far more useful for a medical staff.
+
+## Context
+
+Built at ECE Paris (Big Data course, 2025) in a team of two. Dataset derived from publicly available football statistics.
